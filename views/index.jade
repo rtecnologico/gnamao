@@ -1,0 +1,23 @@
+extends layout
+ 
+block content
+    h1= title
+    form(name="add-estimation", method="post", action="/inserir")
+        div.input
+            span.label Nome
+            input(type="text", name="nome")
+
+        div.input
+            span.label Login
+            input(type="text", name="login")
+
+        div.input
+            span.label Senha
+            input(type="text", name="senha")
+
+             div.input
+            span.label Telefone
+            input(type="text", name="telefone")
+
+        div.actions
+            input(type="submit", value="add")
