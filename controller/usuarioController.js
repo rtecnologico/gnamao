@@ -98,12 +98,60 @@ var userSchema = new Schema({
 	device: {
 		type: String,
 		required: false
+	},
+	avaliacaoSatisfatoria: {
+		type: String,
+		required: false
+	},
+	banco: {
+		type: String,
+		required: false
+	},
+	titularConta: {
+		type: String,
+		required: false
+	},
+	tipoConta: {
+		type: String,
+		required: false
+	},
+	agenciaBancaria: {
+		type: String,
+		required: false
+	},
+	contaBancaria: {
+		type: String,
+		required: false
+	},
+	opBancaria: {
+		type: String,
+		required: false
+	},
+	cpf: {
+		type: String,
+		required: false
+	},
+	qtdCancelamentos: {
+		type: Number,
+		required: false
+	},
+	qtdExcluidos: {
+		type: Number,
+		required: false
+	},
+	listaNegra: {
+		type: Boolean,
+		required: false
+	},
+	qtdNotificado: {
+		type: Number,
+		required: false
+	},
+	dataUltimaNotificacao: {
+		type: Date,
+		required: false
 	}
 
-	//lastPositionGeoPoint: {
-	//	type: String,
-	//	required: true
-	//},
 }, { collection: '_User' });
 
 var User = mongoose.model('user', userSchema);

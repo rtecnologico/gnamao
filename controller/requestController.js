@@ -141,7 +141,7 @@ var requestSchema = new Schema({
 		required: false
 	},
 	requisicaoFinalizada: {
-		type: String,
+		type: Boolean,
 		required: false
 	},
 	recebedorPagamento: {
@@ -160,6 +160,10 @@ var requestSchema = new Schema({
 		type: String,
 		required: false
 	},
+	dataPagamento: {
+		type: Date,
+		required: false
+	},
 	dataRepasse: {
 		type: Date,
 		required: false
@@ -175,11 +179,15 @@ var requestSchema = new Schema({
 	idProprioMoipTaxa: {
 		type: String,
 		required: false
+	},
+	avaliacaoAtendimento: {
+		type: String,
+		required: false
+	},
+	avaliado: {
+		type: Boolean,
+		required: false
 	}
-	
-
-
-
 
 });
 

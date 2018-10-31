@@ -1,21 +1,33 @@
 var express = require('express');
 var router = express.Router();
 var User = require('../controller/usuarioController');
+var User_old = require('../controller/usuariooldController');
 var Request = require('../controller/requestController');
 var Service = require('../controller/serviceController');
 var Situacao = require('../controller/situacaoController');
+var Cancelamento = require('../controller/cancelamentoController');
 var nodemailer = require('nodemailer');
 var crypto = require('crypto');
-var apn = require('apn');
+
 var Moip = require("moip");
 var url = 'https://guinchonamao.herokuapp.com';
+
+
+
+
 
 var gcm = require('node-gcm');
  router.get('/', function(req, res, next) {
 	res.render('index', { title: 'teste' });
 });
-
-
+//cfbb0c8a59ca48bb9cb50a874701f1d2_v2 sandbox
+//fbb2175719ff47be9330f9107164008f_v2
+//fbb2175719ff47be9330f9107164008f_v2
+	const moip = require('moip-sdk-node').default({
+  accessToken: 'fbb2175719ff47be9330f9107164008f_v2',
+  production: true
+}); 
+	 
 
 router.get('/deletarteste/:userId', function(req,res,mext){
 
@@ -32,10 +44,14 @@ User.remove({_id:req.params.userId}, function(err) {
 
 });
  router.get('/mteste', function(req, res, next) {
-	 
-	 var teste =  { title: 'teste' };
-	res.send(teste);
+	
+
 });
+
+router.get('/getpaga', function(req, res, next) {
+	
+	emailgeral("rcsouza23@gmail.com","assunto","texto");
+});	
 
 router.get('/porce', function(req, res, next) {
 	
@@ -48,42 +64,30 @@ router.get('/porce', function(req, res, next) {
 });
 
 router.get('/testenotificacao', function(req, res, next) {
+	var apn = require('apn');
+	var options = {
+	token: {
+		key: "APNsAuthKey_4CT9J4522K.p8",
+		keyId: "4CT9J4522K",
+		teamId: "9CJRFW89ZU",
+	},
+	production: false,
+};
+	var apnProvider = new apn.Provider(options);
+var deviceToken = "518e991642d2974d11d32f6d88ee7fe1d0b1913f135c217716fc1adf2aac238c";
+	var note = new apn.Notification();
+
+note.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
+note.badge = 3;
+note.sound = "ping.aiff";
+note.alert = "\uD83D\uDCE7 \u2709 You have a new message";
+note.payload = {'messageFrom': 'John Appleseed'};
+note.topic = "com.herokuapp.guinchonamao";
 	
-User.where('isClient', 'false').where('state','Bahia' ).find(function(err, listguincho){
-
-			
-		for(var i = 0; i < listguincho.length; i++ ){
-			
-			if(listguincho[i].device === 'android'){
-				
-				var message = new gcm.Message({
-					 collapseKey: 'demo',  
-
-			   data: {
-				
-                    notification: {
-                        alert: {
-				 sound: 'default',
-                            title: 'Nova solicitação !',
-                            body: 'Nova solicitação de atendimento em sua área de atuação !'
-                        }
-                    }
-			   }
-				});
-
-		// Set up the sender with you API key, prepare your recipients' registration tokens. 
-		var sender = new gcm.Sender('AAAA3mpxyus:APA91bEV-2X0RiHrE198rq-W_vQiKOZ1Ibrt1ExZFAUp1LXuKx0KyHJvR1UWXiEg949y5tANmyQ7BhPvGHiSoOsFNe3xv8n63sMEFoZAfr7TBklTUQ0A48tzDoRU0m4pZcinXk5BgP_r');
-		var regTokens = [listguincho[i].regid];
-
-				sender.send(message, { registrationTokens: regTokens }, function (err, response) {
-
-				}); 
-					
-			}
-			
-		}
-
+	apnProvider.send(note, deviceToken).then( (result) => {
+	// see documentation for an explanation of result
 	});
+					res.send('foi');
 
 });
 
@@ -167,7 +171,17 @@ router.post('/naspretorno', function(req, res, next) {
 
 				} }, function (err, place) {
 					
-				
+	
+	
+		emailgeral("financeiro@guinchonamao.com.br","Status pagamento Guincho na mão"+place.idProprioMoipTaxa,texto);
+		
+		User.findOne({_id:place.provider},function (err, provider) { 
+	
+	
+		emailgeral(provider.email,"Status pagamento Guincho na mão",texto);
+		
+	
+	        });
 					
 				});
 
@@ -198,7 +212,15 @@ router.post('/naspretorno', function(req, res, next) {
 			
                      }, function (err, place) {
 				
-  	
+  	emailgeral("financeiro@guinchonamao.com.br","Status pagamento Guincho na mão"+place.idProprioMoipTaxa,texto);
+		
+		User.findOne({_id:place.provider},function (err, provider) { 
+	
+	
+		emailgeral(provider.email,"Status pagamento Guincho na mão",texto);
+		
+	
+	        });
 
 	});
 	
@@ -222,30 +244,81 @@ router.post('/naspretorno', function(req, res, next) {
 		User.findOne({_id:requestx.from},function (err, usuario) { 
 	
 	
-		//emailgeral(usuario.email,texto);
-		
+		emailgeral(usuario.email,"Status pagamento Guincho na mão",texto);
+			if(usuario.device === 'android'){
+				
+				var message = new gcm.Message({
+					 collapseKey: 'demo',  
+
+			   data: {
+				
+                    notification: {
+                        alert: {
+				 sound: 'default',
+                            title: 'Status pagamento '+statuspaga,
+                            body: texto
+                        }
+                    }
+			   }
+				});
+
+		// Set up the sender with you API key, prepare your recipients' registration tokens. 
+		var sender = new gcm.Sender('AAAA3mpxyus:APA91bEV-2X0RiHrE198rq-W_vQiKOZ1Ibrt1ExZFAUp1LXuKx0KyHJvR1UWXiEg949y5tANmyQ7BhPvGHiSoOsFNe3xv8n63sMEFoZAfr7TBklTUQ0A48tzDoRU0m4pZcinXk5BgP_r');
+		var regTokens = [usuario.regid];
+
+				sender.send(message, { registrationTokens: regTokens }, function (err, response) {
+
+				}); 
+					
+			}
 	
 	        });
 		
 		User.findOne({_id:requestx.provider},function (err, provider) { 
 	
 	
-		//emailgeral(provider.email,texto);
-		
+		emailgeral(provider.email,"Status pagamento Guincho na mão",texto);
+			if(provider.device === 'android'){
+				
+				var message = new gcm.Message({
+					 collapseKey: 'demo',  
+
+			   data: {
+				
+                    notification: {
+                        alert: {
+				 sound: 'default',
+                            title: 'Status pagamento '+statuspaga,
+                            body: texto
+                        }
+                    }
+			   }
+				});
+
+		// Set up the sender with you API key, prepare your recipients' registration tokens. 
+		var sender = new gcm.Sender('AAAA3mpxyus:APA91bEV-2X0RiHrE198rq-W_vQiKOZ1Ibrt1ExZFAUp1LXuKx0KyHJvR1UWXiEg949y5tANmyQ7BhPvGHiSoOsFNe3xv8n63sMEFoZAfr7TBklTUQ0A48tzDoRU0m4pZcinXk5BgP_r');
+		var regTokens = [provider.regid];
+
+				sender.send(message, { registrationTokens: regTokens }, function (err, response) {
+
+				}); 
+					
+			}
 	
 	        });
 	
 	
 	});
-	
+
 	Request.findOneAndUpdate({idProprioMoip:req.body.id_transacao}, { $set: { 
 		
 		dataTaxaServicoPaga: datafinal,
+		clientPayed : taxapaga,
 		statusPagamento: statuspaga,
 		taxaServicoPaga:taxapaga 
 	
 	} }, function (err, place) {
- 
+	   
 
 	});
 	
@@ -261,29 +334,15 @@ router.post('/naspretorno', function(req, res, next) {
 	
     });
 	
-			
-
-			
+		
 	}
 			
 	});
 	
-		
-		
-		
-		
 		}
 		
-		
-		
-		
-		
-		
 	});
-	
-		
-	
-	
+
 });
 
 router.post('/coordguincho', function(req, res, next) {
@@ -322,21 +381,17 @@ router.post('/regid', function(req, res, next) {
 	res.send(req.body.regid);
       User.findOneAndUpdate({_id:req.body.userid}, { $set: { 
 		
-		
 		regid: req.body.regid
-	
 	
 		} }, function (err, place) {
 			var content = "";
+	      
 			if(err){
 
 				content = "";
 				content = "Não foi possivel cadastrar o guincheiro";
 
 			}
-
-			
-		
 
 });
 
@@ -400,8 +455,8 @@ sender.send(message, { registrationTokens: regTokens }, function (err, response)
 
 
 router.post('/logar',function(req, res, next){
-
-															
+	
+/*const crypto = require('crypto');
 const cipher = crypto.createCipher('aes192', req.body.senha);
 
 var encrypted = '';
@@ -412,11 +467,17 @@ cipher.on('readable', () => {
 });
 cipher.on('end', () => {
 
-  // Prints: ca981be48e90867604588e75d04feabb63cc007a8f8ad89b10616ed84d815504
 });
 
 cipher.write('some clear text data');
-cipher.end();
+cipher.end();*/
+const crypto = require('crypto');
+
+const secret = req.body.senha;
+const encrypted = crypto.createHmac('sha256', secret)
+                   .update('I love cupcakes')
+                   .digest('hex');
+	
 
 		User.findOne({username:req.body.login, password:encrypted},function (err, usuarios) {  
 		  
@@ -496,6 +557,22 @@ router.get('/listardesativados', function(req, res, next) {
 	})
 
 });
+router.get('/listarantigos', function(req, res, next) {
+	
+	//buscar usuarios na collection usuarios
+
+	User_old.find(function(err, usuarios){
+
+		if(err){
+			
+		} else {
+			
+			res.send(usuarios);
+		}
+
+	})
+
+});
 router.get('/listarapagar', function(req, res, next) {
 	
 	//buscar usuarios na collection usuarios
@@ -507,6 +584,22 @@ router.get('/listarapagar', function(req, res, next) {
 		} else {
 			
 			res.send(requests);
+		}
+
+	})
+
+});
+router.get('/listarusuarios', function(req, res, next) {
+	
+	//buscar usuarios na collection usuarios
+
+	User.find(function(err, usuarios){
+
+		if(err){
+			
+		} else {
+			
+			res.send(usuarios);
 		}
 
 	})
@@ -529,36 +622,74 @@ router.get('/listarareceber', function(req, res, next) {
 
 });
 
-function emailgeral(email,texto){
+router.get('/listartaxasrecebidas', function(req, res, next) {
+	
+	//buscar usuarios na collection usuarios
 
-var transporte = nodemailer.createTransport({
-					  	service: 'Gmail', // Como mencionei, vamos usar o Gmail
-					  	auth: {
-					    user: 'guinchonamaoapp2@gmail.com', // Basta dizer qual o nosso usuário
-					    pass: 'Guincho12345'             // e a senha da nossa conta
-					  	} 
-						});
+	Request.where('recebedorPagamento', 'motorista').where('taxaServicoPaga', 'true').find(function(err, requests){
 
-						// Após configurar o transporte chegou a hora de criar um e-mail
-						// para enviarmos, para isso basta criar um objeto com algumas configurações
-						var email = {
-						  from: 'guinchonamaoapp2@gmail.com', // Quem enviou este e-mail
-						  to: email, // E-mail do administrador que cadastra os guinchos
-						  subject: 'Cadastro do guincho',  // Um assunto bacana :-) 
-						  html: texto // O conteúdo do e-mail
-						};
+		if(err){
+			res.send('erro');
+		} else {
+			
+			res.send(requests);
+		}
 
-						// Pronto, tudo em mãos, basta informar para o transporte
-						// que desejamos enviar este e-mail
-						transporte.sendMail(email, function(err, info){
-						  if(err)
-						    throw err; // Oops, algo de errado aconteceu.
+	})
 
-					
-						});
+});
+
+router.get('/listataxaspagas', function(req, res, next) {
+	
+	//buscar usuarios na collection usuarios
+
+	Request.where('recebedorPagamento', 'aplicativo').where('pagamentoRepassado', 'true').find(function(err, requests){
+
+		if(err){
+			res.send('erro');
+		} else {
+			
+			res.send(requests);
+		}
+
+	})
 
 
+});
 
+function emailgeral(email,assunto,texto){
+
+
+	const nodemailer = require('nodemailer');
+
+	
+	const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // true for 465, false for other ports
+  auth: {
+  	   user: 'guinchonamaoapp2@gmail.com', // Basta dizer qual o nosso usuário
+	    pass: 'Guincho12345'             // e a senha da nossa conta
+  },
+  tls: { rejectUnauthorized: false }
+});
+
+		const mailOptions = {
+  from: 'guinchonamaoapp2@gmail.com',
+  to: email,
+  subject: assunto,
+  text: texto
+};
+
+		transporter.sendMail(mailOptions, function(error, info){
+  if (error) {
+   // res.send(error);
+  } else {
+   // res.send('Email enviado: ' + info.response);
+  }
+});
+	
+	
 }
 
 router.post('/inserir', function(req, res, next) {
@@ -583,22 +714,11 @@ router.post('/inserir', function(req, res, next) {
 
 		if(usuario.length === 0 || usuario === ""){
 													
-						
-const cipher = crypto.createCipher('aes192', req.body.senha);
-
-var encrypted = '';
-cipher.on('readable', () => {
-  var data = cipher.read();
-  if (data)
-    encrypted += data.toString('hex');
-});
-cipher.on('end', () => {
-  
-  // Prints: ca981be48e90867604588e75d04feabb63cc007a8f8ad89b10616ed84d815504
-});
-
-cipher.write('some clear text data');
-cipher.end();
+	const crypto = require('crypto');
+const secret = req.body.senha;
+const encrypted = crypto.createHmac('sha256', secret)
+                   .update('I love cupcakes')
+                   .digest('hex');
 
 		var dataatual = new Date();
 
@@ -630,7 +750,14 @@ cipher.end();
 		rntt : req.body.rntt,
 		cep : req.body.cep,
 		city : req.body.cidade,
-		state : req.body.estado
+		state : req.body.estado,
+		cpf : req.body.cpf,
+		banco : req.body.banco,
+		titularConta : req.body.titularconta,
+		tipoConta : req.body.tipoconta,
+		agenciaBancaria : req.body.agenciabancaria,
+		contaBancaria : req.body.contabancaria,
+		opBancaria : req.body.opbancaria
 
 		}).save(function(err, usuarios){
 
@@ -643,10 +770,10 @@ cipher.end();
 			if(usuarios.isClient === false){
 //contato@elitetransportesnet.com.br
 var texto =	"RNTT = "+req.body.rntt+", Placa = "+req.body.placauser+", Modelo guincho = "+req.body.modelguincho+", Telefone = "+req.body.telefone+",E-mail = "+req.body.email+" - Para ativar esse guincheiro clique no link "+url+"/confirguincheiro/"+usuarios._id;
-						  	emailgeral('contato@elitetransportesnet.com.br',texto);
+						  	emailgeral('cadastro@guinchonamao.com.br','Ativar guincheiro',texto);
 									var texto2 =	"Para confirmar sua conta no Guincho na Mão clique no link:  "+url+"/confirmarconta/"+usuarios._id+"/"+req.body.email;
 
-						  	emailgeral(req.body.email,texto2);
+						  	emailgeral(req.body.email,"Confirmar conta",texto2);
 							res.send(usuarios);
 
 							}	
@@ -654,7 +781,7 @@ var texto =	"RNTT = "+req.body.rntt+", Placa = "+req.body.placauser+", Modelo gu
 
 								var texto =	"Para confirmar sua conta no Guincho na Mão clique no link:  "+url+"/confirmarconta/"+usuarios._id+"/"+req.body.email;
 
-						  	emailgeral(req.body.email,texto);
+						  	emailgeral(req.body.email,"Confirmar conta",texto);
 								res.send(usuarios);
 						
 
@@ -703,11 +830,12 @@ var texto =	"RNTT = "+req.body.rntt+", Placa = "+req.body.placauser+", Modelo gu
 	
 		} }, function (err, place) {
 			var content = "";
+	      var contentuser = "";
 			if(err){
 
 				content = "";
 				content = "Não foi possivel cadastrar o guincheiro";
-					emailgeral('contato@elitetransportesnet.com.br',content);
+					emailgeral('cadastro@guinchonamao.com.br','Ativar guincho',content);
   res.send("Não foi possivel cadastrar o guincheiro"+err);
 			}
 
@@ -715,18 +843,51 @@ var texto =	"RNTT = "+req.body.rntt+", Placa = "+req.body.placauser+", Modelo gu
 
 				content = "";
 				content = "Não foi possivel cadastrar o guincheiro";
-						emailgeral('contato@elitetransportesnet.com.br',content);
+						emailgeral('cadastro@guinchonamao.com.br','Ativar guincho',content);
                  res.send("Não foi possivel ativar essa conta do guincheiro");
 					
 					
 			}else{
 
-
+				contentuser = "";
+				contentuser = "O guincheiro foi ativado Nome="+place.name+"e RNTT ="+place.rntt+" e já pode atender solicitações de guincho, realize o login novamente";
 				content = "";
-				content = "O guincheiro foi cadastrado Nome="+place.name+"e RNTT ="+place.rntt;
-	             emailgeral('contato@elitetransportesnet.com.br',content);
-				res.send("O guincheiro foi ativo e está proto para trabalhar, Nome="+place.name+"e RNTT ="+place.rntt);
+				content = "O guincheiro foi ativado Nome="+place.name+"e RNTT ="+place.rntt+" e já pode atender solicitações de guincho";
+	             emailgeral('cadastro@guinchonamao.com.br','Ativar guincho',content);
+				emailgeral(place.email,'Ativação do guincho',contentuser);
+				res.send("O guincheiro foi ativo e está pronto para trabalhar, Nome="+place.name+"e RNTT ="+place.rntt);
+				
+				
+				if(place.device === 'android'){
+				
+				var message = new gcm.Message({
+					 collapseKey: 'demo',  
+
+			   data: {
+				
+                    notification: {
+                        alert: {
+				 sound: 'default',
+                            title: 'Ativação de conta',
+                            body: 'Sua conta esta ativa, você já pode atender solicitações de guincho'
+                        }
+                    }
+			   }
+				});
+
+		// Set up the sender with you API key, prepare your recipients' registration tokens. 
+		var sender = new gcm.Sender('AAAA3mpxyus:APA91bEV-2X0RiHrE198rq-W_vQiKOZ1Ibrt1ExZFAUp1LXuKx0KyHJvR1UWXiEg949y5tANmyQ7BhPvGHiSoOsFNe3xv8n63sMEFoZAfr7TBklTUQ0A48tzDoRU0m4pZcinXk5BgP_r');
+		var regTokens = [place.regid];
+
+				sender.send(message, { registrationTokens: regTokens }, function (err, response) {
+
+				}); 
+					
 			}
+							
+				
+			}
+
 
 		});
 
@@ -749,7 +910,7 @@ var texto =	"RNTT = "+req.body.rntt+", Placa = "+req.body.placauser+", Modelo gu
 				content = "";
 				
 				content = "Não foi possivel cadastrar o cliente";
-				emailgeral(req.params.email,content);
+				emailgeral(req.params.email,'Confirmação conta',content);
 				res.send("Não foi possivel confirmar o cliente");
 
 			}
@@ -758,7 +919,7 @@ var texto =	"RNTT = "+req.body.rntt+", Placa = "+req.body.placauser+", Modelo gu
 
 				content = "";
 				content = "Não foi possivel confirmar o cliente";
-					emailgeral(req.params.email,content);
+					emailgeral(req.params.email,'Confirmação conta',content);
 					 res.send("Não foi possivel confirmar o cliente");
 
 			}else{
@@ -766,7 +927,7 @@ var texto =	"RNTT = "+req.body.rntt+", Placa = "+req.body.placauser+", Modelo gu
 
 				content = "";
 				content = "O cliente foi confirmado Nome="+place.name;
-				emailgeral(req.params.email,content);
+				emailgeral(req.params.email,'Confirmação conta',content);
 				 res.send("O cliente foi confirmado Nome="+place.name);
 
 			}
@@ -782,9 +943,9 @@ var texto =	"RNTT = "+req.body.rntt+", Placa = "+req.body.placauser+", Modelo gu
 		});
 
 
-router.post('/obtemuser', function(req, res, next) {
+router.get('/obtemuser/:idUser', function(req, res, next) {
       
-	User.findById(req.body.iduser, function (err, usuario) {  
+	User.findById(req.params.idUser, function (err, usuario) {  
     if(err){
 			
 		} else {
@@ -820,12 +981,22 @@ var datafinal = Date();
 		//lastPositionGeoPoint : 'teste',
 		winchModels : req.body.modelguincho,
 		trailerCapacity : req.body.trailerCapacity,
-		towCapacities : req.body.trailerCapacity,
+		towCapacities : req.body.towCapacities,
 		cep : req.body.cep,
 		city : req.body.cidade,
 		state : req.body.estado,
 		rntt : req.body.rntt,
-		placauser: req.body.placauser
+		placauser: req.body.placauser,
+		availability : req.body.avaliado,  
+		emailVerified : req.body.emailverificado,
+		cpf : req.body.cpf,
+		banco : req.body.banco,
+		titularConta : req.body.titularconta,
+		tipoConta : req.body.tipoconta,
+		agenciaBancaria : req.body.agenciabancaria,
+		contaBancaria : req.body.contabancaria,
+		opBancaria : req.body.opbancaria,
+		listaNegra :  req.body.listanegra
 
 	} }, function (err, place) {
  			
@@ -841,10 +1012,10 @@ router.post('/deletaruser', function(req,res,mext){
 User.remove({ _id:req.body.iduser }, function(err) {
     if (!err) {
            
-   
+   res.send("");
     }
     else {
-         
+         res.send("");
     }
 });
 
@@ -1013,7 +1184,7 @@ router.post('/obtemreq', function(req, res, next) {
     if(err){
 		
 		} else {
-		
+				
 			res.send(request);
 		}
 });
@@ -1093,10 +1264,15 @@ var datafinal = dataatual.toString();
 		provider: req.body.iduser  
 	
 	} }, function (err, place) {
+		
 	
-			
-				User.findOne({ '_id': place.from },  function (err, person) {
-					 if (err) {return handleError(err);}
+});
+	
+	
+			// o id é req.body.idreq e o provider req.body.iduser
+	Request.findOne({_id: req.body.idreq}, function (err, request) {
+		
+	User.findOne({ _id: request.from },  function (err, person) {
 				
 				if(person.device === 'android'){
 					var message = new gcm.Message({
@@ -1106,7 +1282,7 @@ var datafinal = dataatual.toString();
 		   data: {
                     notification: {
                         alert: {
-				 sound: 'default',
+			    sound: 'default',
                             title: 'Sua solicitação foi escolhida !',
                             body: 'Um guincho disponivel'
                         }
@@ -1130,35 +1306,76 @@ var datafinal = dataatual.toString();
 		
 });
 
-
+	
 // manda um push
+
 
 });
 
 
 router.post('/rejeitarreq', function(req, res, next) {
 
-	
-	Service.remove({ request:req.body.idreq }, function(err){
+		var Data = new Date();
+		var Fuso = Data.getTimezoneOffset()/60-3;
+		if (Fuso) Data = new Date(Data.valueOf() + (Fuso * 3600000));
+ 		var datafinal = Data;
+
+		Request.findOne({_id:req.body.idreq},  function (err, request) {
+			
+	Service.remove({ request:request._id }, function(err){
 
 		if(err){
 			
 		} else {
+		
+
+		new Cancelamento({
 			
+			tipo :'cancelamento',
+			request :req.body.idreq,
+			averiguado : false,
+			autorCancelamento :req.body.iduser,
+			usuario :request.from,
+			guincho :request.provider,
+			dataHoraRequest :request.createdAt,
+			createdAt :datafinal,
+			updatedAt : datafinal
+
+		}).save(function(err, request){
+
+
+		
+
+		});
 			
 		}
 
 	});
-	
-	
-
-		Request.findOne({_id:req.body.idreq},  function (err, request) {
-			
-			res.send(request);
+		 
 		if(req.body.iduser === request.provider){
-		
 			
+		User.findOne({ '_id': request.provider },  function (err, users) {
+				
+				if (typeof users.qtdCancelamentos !== 'undefined') {
+				var qtdCancelx = users.qtdCancelamentos;
+			      var qtdCancel = users.qtdCancelamentos  + 1;
+			}else{
+			var qtdCancel = 1;
+			}
+					
+			User.findOneAndUpdate({ '_id': request.provider }, { $set: {
+
+				qtdCancelamentos: qtdCancel  
+	
+			} }, function (err, place) {
+		
+	
+			});
+				
+			});
+		
 		User.findOne({ '_id': request.from },  function (err, person) {
+			
 					 if (err) {return handleError(err);}
 				
 				if(person.device === 'android'){
@@ -1201,9 +1418,32 @@ router.post('/rejeitarreq', function(req, res, next) {
 		
 	
 		if(req.body.iduser === request.from){
+			
+			User.findOne({ '_id': request.from },  function (err, users) {
+				
+				if (typeof users.qtdCancelamentos !== 'undefined') {
+				var qtdCancelx = users.qtdCancelamentos;
+			      var qtdCancel = users.qtdCancelamentos  + 1;
+			}else{
+			var qtdCancel = 1;
+			}
+					
+					
+			User.findOneAndUpdate({ '_id': request.from }, { $set: {
+
+				qtdCancelamentos: qtdCancel  
+	
+			} }, function (err, place) {
+		
+	
+			});
+				
+			});
 		
 		
 		User.findOne({ '_id': request.provider },  function (err, person) {
+			
+			
 					 if (err) {return handleError(err);}
 				
 				if(person.device === 'android'){
@@ -1272,7 +1512,7 @@ router.post('/aceitarreq', function(req, res, next) {
 		
 		clientAccepted: true ,
 		providerAccepted: true ,
-		state: 'Aceite'
+		state: 'Aceito'
 	
 	} }, function(err,placeserv){
 
@@ -1290,7 +1530,7 @@ router.post('/aceitarreq', function(req, res, next) {
 	Request.findOneAndUpdate({_id:req.body.idreq}, { $set: { answered: true  } }, function (err, place) {
 
 		
-		User.findOne({ '_id': place.provider },  function (err, person) {
+		User.findOne({ _id: place.provider },  function (err, person) {
 					 if (err) {return handleError(err);}
 				
 				if(person.device === 'android'){
@@ -1318,8 +1558,6 @@ router.post('/aceitarreq', function(req, res, next) {
 					
 					}else{
 				
-						
-						
 					//APN
 					}
 
@@ -1353,7 +1591,11 @@ router.post('/fecharreq', function(req, res, next) {
 			
 		} else {	
 	
-	Request.findOneAndUpdate({_id:placeserv.request}, { $set: { requisicaoFinalizada: true , service: req.body.servico,formattedDate:new Date().getTime()  } }, function (err, place) {
+	Request.findOneAndUpdate({_id:placeserv.request}, { $set: { requisicaoFinalizada: true , 
+								   service: req.body.servico,
+								   formattedDate:new Date().getTime()  
+								  
+								  } }, function (err, place) {
 
 		User.findOne({ _id: place.from },  function (err, person) {
 					 if (err) {return handleError(err);}
@@ -1380,24 +1622,17 @@ router.post('/fecharreq', function(req, res, next) {
 
 				sender.send(message, { registrationTokens: regTokens }, function (err, response) {
 
-				});
-					
-	
+				});					
 
 		});
-		
-		
-		
+			
 	});
 
 		res.send(placeserv);	
 		}
-
 		  
 });
 
-
-		
 
 });
 
@@ -1406,16 +1641,114 @@ router.post('/deletarreq', function(req,res,next){
 	var data = new Date().getTime();
 	
 		   
-		   
+		   	var Data = new Date();
+		var Fuso = Data.getTimezoneOffset()/60-3;
+		if (Fuso) Data = new Date(Data.valueOf() + (Fuso * 3600000));
+ 		var datafinal = Data;
 			
+
 			Request.findOneAndUpdate({_id:req.body.idreq}, { $set: { 
 				
 				visivelcliente: false,
 				datadelete: data
 			
-			} }, function (err, place) {
+			} }, function (err, request) {
 			
-		res.send(place);
+			User.findOne({ '_id': request.provider },  function (err, person) {
+			
+		
+						if (typeof person.qtdExcluidos !== 'undefined') {
+				var qtdExcluirx = person.qtdExcluidos;
+				var qtdExcluir = qtdExcluirx + 1;
+			}else{
+			var qtdExcluir = 1;
+			}
+				
+
+				User.findOneAndUpdate({ '_id': request.from }, { $set: {
+
+					qtdExcluidos: qtdExcluir  
+
+				} }, function (err, place) {
+
+
+				});
+			
+	
+			});
+			
+					 
+	
+	if(req.body.perfiluser == true){
+	   
+		User.findOne({ '_id': request.from },  function (err, users) {
+				
+				if (typeof users.qtdExcluidos !== 'undefined') {
+				var qtdExcluirx = users.qtdExcluidos;
+				var qtdExcluir = qtdExcluirx + 1;
+			}else{
+			var qtd = 1;
+			}
+					
+			User.findOneAndUpdate({ '_id': request.from }, { $set: {
+
+				qtdExcluidos: qtd  
+	
+			} }, function (err, place) {
+		
+	
+			});
+				
+			});
+		
+	   var autor = request.from;
+	   
+	   }else{
+		   
+		   	User.findOne({ '_id': request.provider },  function (err, users) {
+				
+				if (typeof users.qtdExcluidos !== 'undefined') {
+				var qtd = users.qtdExcluidos++;
+			}else{
+			var qtd = 1;
+			}
+					
+			User.findOneAndUpdate({ '_id': request.provider }, { $set: {
+
+				qtdExcluidos: qtd  
+	
+			} }, function (err, place) {
+		
+	
+			});
+				
+			});
+		   
+	    var autor = request.provider;
+	   
+	   }
+		
+			new Cancelamento({
+
+			tipo :'exclusao',
+			request :req.body.idreq,
+			averiguado : false,
+			autorCancelamento :autor,
+			usuario :request.from,
+			guincho :request.provider,
+			dataHoraRequest :request.createdAt,
+			createdAt :datafinal,
+			updatedAt : datafinal
+
+		}).save(function(err, cancel){
+
+
+		
+
+		});
+				
+				
+		res.send(request);
 	});
 
 	
@@ -1477,28 +1810,6 @@ router.post('/obtemservporreq', function(req, res, next) {
 
 
 router.post('/enviarcod', function(req, res, next) {
-      
-	User.find({email :req.body.emailuser }, function (err, usuario) { 
-
-    	if(err){
-
-		
-
-		} 
-		if(usuario) {
-	
-		res.send(usuario);
-
-		}
-
-	});
-	
-});
-
-
-router.post('/enviaremail', function(req, res, next) {
-  
-
 
 /** Sync */
 function randomString(length, chars) {
@@ -1535,39 +1846,23 @@ function randomAsciiString(length) {
 		var ret = randomAsciiString(5);
 
 
-User.findOneAndUpdate({email:req.body.email}, { $set: { codseg: ret } }, function (err, place) {
+User.update({email:req.body.emailuser}, { codseg: ret },{multi:true}, function (err, place) {
 	 if(err){
 
-		} 
+			res.send(err);
+
+		} else{
+		
+		emailgeral(req.body.emailuser,"Recuperação de senha","Seu código de confirmação de mudança é :"+ret);
+		res.send(place);
+		
+		}
 	});
 
-	
-  var transporte = nodemailer.createTransport({
-	  	service: 'Gmail', // Como mencionei, vamos usar o Gmail
-	  	auth: {
-	    user: 'guinchonamaoapp2@gmail.com', // Basta dizer qual o nosso usuário
-	    pass: 'Guincho12345'             // e a senha da nossa conta
-	  	} 
-		});
 
-		// Após configurar o transporte chegou a hora de criar um e-mail
-		// para enviarmos, para isso basta criar um objeto com algumas configurações
-		var email = {
-		  from: 'guinchonamaoapp2@gmail.com', // Quem enviou este e-mail
-		  to: req.body.email, // Quem receberá
-		  subject: 'Recuperação de senha Guincho na Mão',  // Um assunto bacana :-) 
-		  html: ret // O conteúdo do e-mail
-		};
-
-		// Pronto, tudo em mãos, basta informar para o transporte
-		// que desejamos enviar este e-mail
-		transporte.sendMail(email, function(err, info){
-		  if(err)
-		    throw err; // Oops, algo de errado aconteceu.
-
-		});
 	
 });
+
 
 router.post('/verificacod', function(req, res, next) {
       
@@ -1588,6 +1883,7 @@ router.post('/verificacod', function(req, res, next) {
 
 router.post('/resetsenha', function(req, res, next) {
 	
+/*	const crypto = require('crypto');
 	const cipher = crypto.createCipher('aes192', req.body.senha);
 
 var encrypted = '';
@@ -1601,61 +1897,78 @@ cipher.on('end', () => {
 });
 
 cipher.write('some clear text data');
-cipher.end();
-
+cipher.end(); */
+	const crypto = require('crypto');
+const secret = req.body.senha;
+const encrypted = crypto.createHmac('sha256', secret)
+                   .update('I love cupcakes')
+                   .digest('hex');
+	
       	//var senhareset = encrypt(new Buffer(req.body.senha, 'utf8'));
 	User.findOneAndUpdate({_id:req.body.iduser}, { $set: { password: encrypted } }, function (err, place) {
 	 if(err){
 
 		} 
+		res.send(place);
 	});
+	
+});
+
+router.post('/resetsenhalogoff', function(req, res, next) {
+	
+
+	const crypto = require('crypto');
+const secret = req.body.senha;
+const encrypted = crypto.createHmac('sha256', secret)
+                   .update('I love cupcakes')
+                   .digest('hex');
+	
+
+		 User.findOneAndUpdate({email:req.body.emailcod}, {$set:{password:encrypted}}, {new: true}, function(err, doc){
+    if(err){
+        res.send(err);
+    }
+
+    res.send(doc);
+});
 	
 });
 
 router.post('/pagarreq', function(req, res, next) {
 	
 	
-	var precofinal = req.body.preco / 100;
+	var precofinal = req.body.preco;
 	//var precofinal = parseFloat(precosonum);
-
-var moip = new Moip({
-  // token: 'M40Q9IS6RU4WADU5MDUB5LBJP1T29QOS',
- // key: 'J6LDRWDEBBEPWKJQUJUDHGXBBTGQWN6GBTRZS47J'
- 
-	token: 'ONXYBJGEEGHECHM4RHARTPDGMGMY2KXF',
-    key: 'OP3X2H7QWYRLH79H2IBUSJYJY9DIKHP4POXV0GQZ',
-   sandbox: true // defaults to false 
-
-});
 
 var idproprio =  new Date().getTime();
 	
-	var payload = {
-    EnviarInstrucao: {
-        InstrucaoUnica: {
-            Razao: 'Pagamento guincho',
-            IdProprio: idproprio,
-            Valores: {
-                Valor: {
-                    $: { 'moeda': 'BRL' },
-                    _: precofinal
-                }
-            }
-		}
-	    }
-	};
- 
-	moip.createPayment(payload, function (err, response) {
-    if (err) {
-
-    } else {
-       
+	 moip.order.create({
+    ownId: '1521656695',
+    items: [{
+        product: 'Guincho atendimento',
+        quantity: 1,
+        detail: 'Sem mais informacoes',
+        price: precofinal
+    }],
+		 customer: {
+        ownId: '1521656726',
+        fullname: 'Aplicativo Guinchona mão',
+        email: 'noreply@email.com',
+        birthDate: '1988-12-30',
+        taxDocument: {
+            type: 'CPF',
+            number: '22222222222'
+        },
+        phone: {
+            countryCode: '55',
+            areaCode: '11',
+            number: '66778899'
+        }
     }
-	});
-	
-
-	
-	Request.findOneAndUpdate({_id:req.body.idreq}, { $set: {
+   
+}).then((response) => {
+		 
+		 	Request.findOneAndUpdate({_id:req.body.idreq}, { $set: {
 		
 		statusPagamento: '',
 		price: req.body.preco,
@@ -1682,44 +1995,130 @@ var idproprio =  new Date().getTime();
 		
 		}
 });
-	
-	
-	// This method has an alias: enviarInstrucaoUnica 
-	moip.enviarInstrucaoUnica(payload, function (err, response) {
-	    // ... 
-		res.send(response);
-	});
-	
-	
-	
+	 var arquivo = {
+		 
+	btn1:{"link":response.body._links.checkout.payCreditCard.redirectHref, "status": true, "texto":"Cartão Crédito"},
+	btn2:{"link":response.body._links.checkout.payBoleto.redirectHref, "status": false, "texto":"Boleto"},
+	btn3:{"link":response.body._links.checkout.payOnlineBankDebitItau.redirectHref, "status": true, "texto":"Débito"}
+		
+			  };
+    res.send(arquivo)
+}).catch((err) => {
+   res.send(err)
+})
+
+
 });
 
 router.post('/pagarreqmotorista', function(req, res, next) {
 	
-	var precofinal = req.body.preco / 100;
+	var precofinal = req.body.preco;
 	//var precofinal = parseFloat(precosonum);
  
 var idproprio =  new Date().getTime();
-	
-	
-	
-	
-	Request.findOneAndUpdate({_id:req.body.idreq}, { $set: {
+	 var Data = new Date();
+var Fuso = Data.getTimezoneOffset()/60-3;
+if (Fuso) Data = new Date(Data.valueOf() + (Fuso * 3600000));
+ var datafinal = Data;
+
+		Request.findOne({_id:req.body.idreq}, function (err, request) {
 		
-		statusPagamento: 'Concluido',
-		price: req.body.preco,
-		idProprioMoip: idproprio,
-		recebedorPagamento: req.body.recebedor
+			if(request.provider){
+		
+			
+		User.findOne({ _id: request.from },  function (err, person) {
+					 if (err) {return handleError(err);}
+				emailgeral(person.email,"Pagamento Guincho na Mão","O cliente escolheu pagamento ao motorista, confirme o pagamento antes de finalizar a solicitação");
+				if(person.device === 'android'){
+					var message = new gcm.Message({
+					 collapseKey: 'demo',
+
+
+			   data: {
+                    notification: {
+                        alert: {
+				 sound: 'default',
+                            title: 'Pagamento ao motorista !',
+                            body: 'O cliente escolheu pagar ao motorista, verifique o pagamento antes de finalizar a solicitação.'
+                        }
+                    }
+			   }
+				});
+
+		// Set up the sender with you API key, prepare your recipients' registration tokens. 
+		var sender = new gcm.Sender('AAAA3mpxyus:APA91bEV-2X0RiHrE198rq-W_vQiKOZ1Ibrt1ExZFAUp1LXuKx0KyHJvR1UWXiEg949y5tANmyQ7BhPvGHiSoOsFNe3xv8n63sMEFoZAfr7TBklTUQ0A48tzDoRU0m4pZcinXk5BgP_r');
+		var regTokens = [person.regid];
+
+				sender.send(message, { registrationTokens: regTokens }, function (err, response) {
+
+				}); 
+					
+					}
+					//else{
+						
+
+						//APN
+					//	}
+
+		});
+				
+				
+		
+		}
+			
+		
 	
-	} }, function (err, place) {
+		if(request.from){
+		
+		
+		User.findOne({ '_id': request.provider },  function (err, person) {
+					 if (err) {return handleError(err);}
+				
+				if(person.device === 'android'){
+					var message = new gcm.Message({
+					 collapseKey: 'demo',
+
+
+			   data: {
+                    notification: {
+                        alert: {
+				 sound: 'default',
+                            title: 'Pagamento Guincho na mão',
+                            body: 'Repasse o valor ao motorista do guincho, obrigado!'
+                        }
+                    }
+			   }
+				});
+
+		// Set up the sender with you API key, prepare your recipients' registration tokens. 
+		var sender = new gcm.Sender('AAAA3mpxyus:APA91bEV-2X0RiHrE198rq-W_vQiKOZ1Ibrt1ExZFAUp1LXuKx0KyHJvR1UWXiEg949y5tANmyQ7BhPvGHiSoOsFNe3xv8n63sMEFoZAfr7TBklTUQ0A48tzDoRU0m4pZcinXk5BgP_r');
+		var regTokens = [person.regid];
+
+				sender.send(message, { registrationTokens: regTokens }, function (err, response) {
+
+				}); 
+					
+					}else{
+						
+
+						
+						//APN
+						}
+
+		});
+			
+			}
 
 	});
+	
+	
 	
    Service.findOneAndUpdate({_id:req.body.idserv},
 			    { $set: {
 				    statusPagamento: 'Concluido',
 				    price: req.body.preco,
 				    idProprioMoip: idproprio,
+				    dataPagamento: datafinal,
 				    recebedorPagamento: req.body.recebedor 
 			    
 			    } }, function (err, service) {  
@@ -1730,9 +2129,20 @@ var idproprio =  new Date().getTime();
 		}
 });
 	
+	Request.findOneAndUpdate({_id:req.body.idreq}, { $set: {
+		
+		statusPagamento: 'Concluido',
+		price: req.body.preco,
+		idProprioMoip: idproprio,
+		recebedorPagamento: req.body.recebedor
 	
+	} }, function (err, place) {
+		
+		res.send(place);
 
-	res.send('ok');
+	});
+	
+	
 	
 });
 
@@ -1785,45 +2195,40 @@ router.post('/pedidospagosmotoristafinalizados', function(req, res, next) {
 
 router.post('/pagarreqtaxa', function(req, res, next) {
 	
-	var precofinal = req.body.preco / 100;
+	var precofinal = req.body.preco;
 	//var precofinal = parseFloat(precosonum);
 
+	//var precofinal = req.body.preco;
+	//var precofinal = parseFloat(precosonum);
 
-var moip = new Moip({
-   // token: 'IU6N4WWMO9IOSZFV3IKKUFO2PS2IPS0D',
-   // key: 'I9CI77UW1P9SDO4FZEZCIIXIXAN8CIPICJ82MZMP',
-  // sandbox: true // defaults to false 
-    token: 'M40Q9IS6RU4WADU5MDUB5LBJP1T29QOS',
-    key: 'J6LDRWDEBBEPWKJQUJUDHGXBBTGQWN6GBTRZS47J'
-});
- 
 var idproprio =  new Date().getTime();
 	
-	var payload = {
-    EnviarInstrucao: {
-        InstrucaoUnica: {
-            Razao: 'Pagamento taxa guincho',
-            IdProprio: idproprio,
-            Valores: {
-                Valor: {
-                    $: { 'moeda': 'BRL' },
-                    _: precofinal
-                }
-            }
-		}
-	    }
-	};
- 
-	moip.createPayment(payload, function (err, response) {
-    if (err) {
-
-    } else {
-
+	 moip.order.create({
+    ownId: '1521656695',
+    items: [{
+        product: 'Guincho atendimento',
+        quantity: 1,
+        detail: 'Sem mais informacoes',
+        price: precofinal
+    }],
+		 customer: {
+        ownId: '1521656726',
+        fullname: 'Aplicativo Guinchona mão',
+        email: 'noreply@email.com',
+        birthDate: '1988-12-30',
+        taxDocument: {
+            type: 'CPF',
+            number: '22222222222'
+        },
+        phone: {
+            countryCode: '55',
+            areaCode: '11',
+            number: '66778899'
+        }
     }
-	});
-	
-	
-	
+   
+}).then((response) => {
+		 
 	Request.findOneAndUpdate({_id:req.body.idreq}, { $set: {
 		
 		idProprioMoipTaxa: idproprio
@@ -1847,13 +2252,20 @@ var idproprio =  new Date().getTime();
 	
 	
 
-	// This method has an alias: enviarInstrucaoUnica 
-	moip.enviarInstrucaoUnica(payload, function (err, response) {
-	    // ... 
-		res.send(response);
-	});
+	 var arquivo = {
+		 
+	btn1:{"link":response.body._links.checkout.payCreditCard.redirectHref, "status": true, "texto":"Cartão Crédito"},
+	btn2:{"link":response.body._links.checkout.payBoleto.redirectHref, "status": true, "texto":"Boleto"},
+	btn3:{"link":response.body._links.checkout.payOnlineBankDebitItau.redirectHref, "status": true, "texto":"Débito"}
+		
+			  };
+    res.send(arquivo)
+}).catch((err) => {
+   res.send(err)
+})
 	
 	
+
 	
 });
 
@@ -1909,42 +2321,38 @@ router.post('/pedidospagosaplicativofinalizados', function(req, res, next) {
 
 
 router.post('/pagartotaltaxa', function(req, res, next) {
+
+	var precofinal = req.body.preco;
 	
-	var precofinal = req.body.preco / 100;
-	//var precofinal = parseFloat(precosonum);
 
-
-var moip = new Moip({
-    token: 'M40Q9IS6RU4WADU5MDUB5LBJP1T29QOS',
-    key: 'J6LDRWDEBBEPWKJQUJUDHGXBBTGQWN6GBTRZS47J',
-    sandbox: false // defaults to false 
-});
- 
 var idproprio =  new Date().getTime();
 	
-	var payload = {
-    EnviarInstrucao: {
-        InstrucaoUnica: {
-            Razao: 'Pagamento guincho',
-            IdProprio: idproprio,
-            Valores: {
-                Valor: {
-                    $: { 'moeda': 'BRL' },
-                    _: precofinal
-                }
-            }
-		}
-	    }
-	};
- 
-	moip.createPayment(payload, function (err, response) {
-    if (err) {
-
-    } else {
-
+	 moip.order.create({
+    ownId: '1521656695',
+    items: [{
+        product: 'Guincho atendimento',
+        quantity: 1,
+        detail: 'Sem mais informacoes',
+        price: precofinal
+    }],
+		 customer: {
+        ownId: '1521656726',
+        fullname: 'Aplicativo Guinchona mão',
+        email: 'noreply@email.com',
+        birthDate: '1988-12-30',
+        taxDocument: {
+            type: 'CPF',
+            number: '22222222222'
+        },
+        phone: {
+            countryCode: '55',
+            areaCode: '11',
+            number: '66778899'
+        }
     }
-	});
-	
+   
+}).then((response) => {
+		 
 	 Request.where('provider', req.body.iduser)
 	  .where('visivelguincho', 'true')
 	  .where('taxaServicoPaga', 'false')
@@ -1988,35 +2396,99 @@ var idproprio =  new Date().getTime();
 
 	}).sort([['createdAt', 'descending']]);	
 	
+	 var arquivo = {
+		 
+	btn1:{"link":response.body._links.checkout.payCreditCard.redirectHref, "status": true, "texto":"Cartão Crédito"},
+	btn2:{"link":response.body._links.checkout.payBoleto.redirectHref, "status": true, "texto":"Boleto"},
+	btn3:{"link":response.body._links.checkout.payOnlineBankDebitItau.redirectHref, "status": true, "texto":"Débito"}
+		
+			  };
+    res.send(arquivo)
+}).catch((err) => {
+   res.send(err)
+})
 	
-// This method has an alias: enviarInstrucaoUnica 
-	moip.enviarInstrucaoUnica(payload, function (err, response) {
-	    // ... 
-		res.send(response);
-	});
 	
+
 	
 	
 });
 
 
 router.get('/baixapagamento/:idReq', function(req, res, next) {
-	var dataatual =  new Date().getTime();
-	
-	      Request.findOneAndUpdate({_id:req.params.idReq}, { $set: { 
+	var dataatual =  new Date().getTime();	
+	      	
+	Request.findById(req.params.idReq, function (err, request) {  
+    		if(err){
 		
-		pagamentoRepassado : true,
-		dataRepasse : dataatual
+		} else {
+				
+			if(request.pagamentoRepassado == true){
+			     var statuspaga = false;
+			}else{
+				var statuspaga = true;
+			}
+			Request.findOneAndUpdate({_id:req.params.idReq}, { $set: { 	
+				pagamentoRepassado : statuspaga,
+				dataRepasse : dataatual
+				} }, function (err, place) {			
+			if(err){
+				res.send("Não foi possivel confirmar o pagamento");
+			}else{
+				 res.send("O pagamento foi confirmado");
+			}
+			});
+			
+		}
+});
+
+
+});
+
+router.post('/avaliaratendimento', function(req, res, next) {
 	
-		} }, function (err, place) {
+	
+	
+	      Request.findOneAndUpdate({_id:req.body.idreq}, { $set: { 
+		
+		avaliacaoAtendimento : req.body.avaliacao,
+		      avaliado: true
+	
+		} }, {new: true}, function (err, request) {
 			
 			if(err){
-
-				res.send("Não foi possivel confirmar o pagamento");
+				
+				res.send("erro");
 
 			}else{
 
-				 res.send("O pagamento foi confirmado");
+				Request.where('provider', request.provider)
+		.where('avaliado', 'true')
+		.find(function (err, requestAll) { 
+	
+				var  totalavaliacao = 0;
+		  for(var i = 0; i < requestAll.length; i++) {
+  				  
+			 var avaliacaoreq = parseInt(requestAll[i].avaliacaoAtendimento);
+			 var totalavaliacao = avaliacaoreq + totalavaliacao;
+			  
+ 			}
+		 var x = parseInt(requestAll.length);
+		 var y = parseInt(totalavaliacao);
+		var avaliacaofinal = y / x;
+		var avaliacaofinal = parseFloat(avaliacaofinal.toFixed(1));
+			User.update({_id:request.provider}, { 
+
+			avaliacaoSatisfatoria : avaliacaofinal
+
+			}, {new: true}, function (err, placex) {
+
+
+			});
+
+	
+		});
+		res.send(request);		
 
 			}
 
@@ -2024,7 +2496,340 @@ router.get('/baixapagamento/:idReq', function(req, res, next) {
 		});
 
 });
-module.exports = router;
 
-
+router.get('/plataforma/obtemreq/:idReq', function(req, res, next) {
+      
+	Request.findById(req.params.idReq, function (err, request) {  
+    if(err){
 		
+		} else {
+				
+			res.send(request);
+		}
+});
+
+
+});
+
+router.get('/plataforma/listarreq', function(req, res, next) {
+      
+	Request.find(function(err, request){
+
+		if(err){
+			
+		} else {
+			
+			res.send(request);
+		}
+
+	})
+});
+
+router.post('/plataforma/editarreq', function(req, res, next) {
+		
+var dataatual = new Date();
+
+var datafinal = Date();
+	
+
+		Request.findOneAndUpdate({_id:req.body.idreq}, { $set: { 
+
+		email : req.body.email, 
+		enderCompleto : req.body.endereco, 		
+		phone : req.body.telefone, 
+		updateAt : datafinal, 
+		towCapacities : req.body.tipoveiculo,		
+		placa: req.body.placa,
+		price: req.body.preco,
+		answered: req.body.respondido,
+		enderCompletoDest: req.body.enderecodestino,
+		inNegotiation: req.body.negociacao,
+		recebedorPagamento: req.body.recebedor,
+		pagamentoRepassado: req.body.pagamentorepassado,
+		requisicaoFinalizada: req.body.requisicaofinalizada,
+		observations: req.body.obs,
+		avaliacaoAtendimento: req.body.avaliacao,
+		cpf : req.body.cpf,
+		banco : req.body.banco,
+		titularConta : req.body.titularconta,
+		tipoConta : req.body.tipoconta,
+		agenciaBancaria : req.body.agenciabancaria,
+		contaBancaria : req.body.contabancaria,
+		opBancaria : req.body.opbancaria
+
+
+	} }, function (err, request) {
+ 			
+			res.send(request);
+});
+	
+});
+
+
+router.post('/plataforma/inserirreq', function(req, res, next) {
+	
+	
+ var Data = new Date();
+var Fuso = Data.getTimezoneOffset()/60-3;
+if (Fuso) Data = new Date(Data.valueOf() + (Fuso * 3600000));
+ var datafinal = Data;
+	
+	new Request({
+
+		email : req.body.email, 
+		enderCompleto : req.body.endereco, 		
+		phone : req.body.telefone, 
+		updateAt : datafinal, 
+		towCapacities : req.body.tipoveiculo,
+		name : req.body.nome, // nome requisitante (busca no arquivo json)		
+		placa: req.body.placa,
+		price: "",
+		enderCompletoDest: req.body.enderecodestino,
+		inNegotiation:  false,
+		recebedorPagamento: "",
+		pagamentoRepassado:  false,
+		requisicaoFinalizada:  false,
+		observations: req.body.obs,
+		avaliacaoAtendimento: req.body.avaliacao,
+		createdAt :datafinal,
+		updatedAt : datafinal,
+		provider : 'teste', // guincheiro (busca quando o guincheiro aceitar)---
+		date : datafinal, 
+		from : req.body.iduser, // id requisitante (busca no arquivo json)
+		formattedDate : 'teste',
+		services : 'teste',
+		paymentMethod : "",
+		answered : false, // guincheiro (quando o guincheiro aceitar)---
+		inNegotiation : false,// guincheiro (quando o guincheiro aceitar)---
+		useGPS : "",
+		clientPayed : "false", // quando o cliente paga
+		clientPaymentRequested : "teste",
+		paymentOption : "teste", // quando abre a requisição
+		lastPositionGeoPoint: "",
+		enderCurto: req.body.endereco,
+		address : req.body.endereco, // email requisitante (busca no arquivo json)
+		requisicaoFinalizada:false,
+		paymentMethod : "",
+		visivelcliente: true,
+		visivelguincho: true,
+		datadelete: '',
+		
+		enderCurtoDest: req.body.enderecodestino,
+	situacao: req.body.situacao,
+		recebedorPagamento: '',
+		pagamentoRepassado: '',
+		idProprioMoipTaxa:''
+		
+		
+
+	}).save(function(err, request){
+
+		if(err){
+			
+			
+		} else {
+			
+	       User.where('isClient', 'false').where('state',req.body.estado).find(function(err, listguincho){
+
+		for(var i = 0; i < listguincho.length; i++ ){
+			
+			if(listguincho[i].device === 'android'){
+				
+				var message = new gcm.Message({
+					 collapseKey: 'demo',
+
+
+			   data: {
+                    notification: {
+                        alert: {
+				 sound: 'default',
+                            title: 'Nova solicitação !',
+                            body: 'Nova solicitação de atendimento em sua área de atuação !'
+                        }
+                    }
+			   }
+				});
+
+		// Set up the sender with you API key, prepare your recipients' registration tokens. 
+		var sender = new gcm.Sender('AAAA3mpxyus:APA91bEV-2X0RiHrE198rq-W_vQiKOZ1Ibrt1ExZFAUp1LXuKx0KyHJvR1UWXiEg949y5tANmyQ7BhPvGHiSoOsFNe3xv8n63sMEFoZAfr7TBklTUQ0A48tzDoRU0m4pZcinXk5BgP_r');
+		var regTokens = [listguincho[i].regid];
+
+				sender.send(message, { registrationTokens: regTokens }, function (err, response) {
+
+				}); 
+					
+			}
+			
+		}
+
+	});
+			
+	res.send(request);
+				
+		}
+		
+		
+
+	});
+	
+
+});
+
+
+router.get('/listarcancelamentos', function(req, res, next) {
+	
+	Cancelamento.where('averiguado', 'false').find(function(err, cancel){
+		
+			res.send(cancel);
+		
+
+	});	
+});
+
+
+
+
+
+router.get('/averiguarcancelamento/:idCancel', function(req, res, next) {
+	
+	
+ var Data = new Date();
+var Fuso = Data.getTimezoneOffset()/60-3;
+if (Fuso) Data = new Date(Data.valueOf() + (Fuso * 3600000));
+ var datafinal = Data;
+	
+
+		Cancelamento.findOneAndUpdate({_id:req.params.idCancel}, { $set: {
+		averiguado: true,
+		dataAveriguado: datafinal
+		
+		}} , function (err, cancel) {
+		
+			
+			User.findOne({ '_id': cancel.autorCancelamento },  function (err, users) {
+				
+				if (typeof users.qtdCancelamentos !== 'undefined') {
+				var qtdCancelx = users.qtdCancelamentos;
+			      var qtdCancel = users.qtdCancelamentos  - 1;
+			}
+					
+			User.findOneAndUpdate({ '_id': cancel.autorCancelamento }, { $set: {
+
+				qtdCancelamentos: qtdCancel  
+	
+			} }, function (err, place) {
+		
+	
+			});
+				
+			});
+			
+			
+			
+	res.send(cancel);
+		}); 
+			
+	
+});
+
+router.get('/obtemcancelamento/:idCancel', function(req, res, next) {
+      
+	Cancelamento.findById(req.params.idCancel, function (err, cancel) {  
+    if(err){
+			
+		} else {
+			
+			res.send(cancel);
+		}
+});
+
+
+});
+
+router.get('/cancelamentosexcedidos', function(req, res, next) {
+	
+	User.where('qtdCancelamentos').gte(5).find(function(err, users){
+		
+			res.send(users);
+		
+	});	
+});
+
+	
+
+router.get('/listarguinchos', function(req, res, next) {
+	
+	User.where('isClient','false').find(function(err, users){
+		
+			res.send(users);
+		
+	});	
+});
+
+router.get('/requisicaoporusuario/:idUser', function(req, res, next) {
+	
+	Request.where('provider',req.params.idUser)
+	  .where('taxaServicoPaga', 'false')
+	  .where('recebedorPagamento', 'motorista')
+		.find(function(err, request){
+
+		if(err){
+			
+		} else {
+			
+			res.send(request);
+		}
+
+	});
+});
+
+router.get('/notificaratraso/:idUser', function(req, res, next) {
+	
+	
+	 var Data = new Date();
+var Fuso = Data.getTimezoneOffset()/60-3;
+if (Fuso) Data = new Date(Data.valueOf() + (Fuso * 3600000));
+ var datafinal = Data;
+		User.findById(req.params.idUser, function (err, users) {
+		
+				if (typeof users.qtdNotificado !== 'undefined') {
+					var qtdNotx = users.qtdNotificado;
+				      var qtdNot = users.qtdNotificado + 1;
+				}else{
+				var qtdNot = 1;
+				}
+
+				User.findOneAndUpdate({ '_id': req.params.idUser }, { $set: {
+
+					qtdNotificado: qtdNot,
+					dataUltimaNotificacao: datafinal
+
+				} }, function (err, place) {
+			if(err){
+			res.send('erro');
+			
+			}else{
+			var texto2 ="Olá prezado parceiro, por gentileza verificar taxas de repasse para o aplicativo que não foram repassadas para o guincho na mão.";
+
+	emailgeral(place.email,"Aviso de taxa não paga",texto2);
+				res.send('ok');
+			
+			}
+
+				});
+
+	
+			});
+	
+			
+		
+	
+});
+
+router.get('/entrarpelofacebook', function(req, res, next) {
+	
+	res.redirect('https://www.facebook.com/dialog/oauth?client_id=491905641283942&redirect_uri=http://www.engrenagemweb.com.br/entrarfacebook&scope=email,user_website,user_location');
+});
+
+
+module.exports = router;

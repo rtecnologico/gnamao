@@ -117,6 +117,14 @@ var serviceSchema = new Schema({
 	idProprioMoipTaxa: {
 		type: String,
 		required: false
+	},
+	avaliacaoAtendimento: {
+		type: String,
+		required: false
+	},
+		avaliado: {
+		type: Boolean,
+		required: false
 	}
 
 });
