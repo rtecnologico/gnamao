@@ -9,9 +9,11 @@
   },
   "license": "MIT",
   "dependencies": {
-    "apn": "^2.1.2",
+    "apn": "^2.2.0",
+    "apn-legacy": "^2.1.5",
     "body-parser": "~1.15.2",
     "cookie-parser": "~1.4.3",
+    "credentials": "^3.0.2",
     "crypto": "0.0.3",
     "data2xml": "~0.8.0",
     "debug": "~2.2.0",
