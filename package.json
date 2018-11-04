@@ -9,9 +9,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "apn": "^2.2.0",
     "apn-legacy": "^2.1.5",
-    "apns": "^0.1.0",
     "body-parser": "~1.15.2",
     "cookie-parser": "~1.4.3",
     "credentials": "^3.0.2",
@@ -32,7 +30,6 @@
     "mongoose": "^4.7.2",
     "morgan": "~1.7.0",
     "node-gcm": "^0.14.4",
-    "node-pushnotifications": "^1.1.7",
     "node-sender": "^2.0.4",
     "nodemailer": "^2.7.0",
     "path": "^0.12.7",
